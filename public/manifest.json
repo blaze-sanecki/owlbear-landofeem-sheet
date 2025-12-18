@@ -1,0 +1,12 @@
+{
+	"name": "MCC Sheet",
+	"version": "1.0.0",
+	"manifest_version": 1,
+	"action": {
+		"title": "MCC Sheet",
+		"icon": "/icon.svg",
+		"popover": "/",
+		"height": 612,
+		"width": 870
+	}
+}
