@@ -1,14 +1,11 @@
 import './style.css'
-import contentHtml from './content.html?raw'
 import OBR from "@owlbear-rodeo/sdk";
-
-document.querySelector<HTMLDivElement>('#app')!.innerHTML = contentHtml
 
 // Helper functions
 let isScriptChange = false;
 let isLoading = false;
 let isReady = false;
-const ID = "com.landofeem.sheet";
+const ID = "quest.jelonek.owlbear.eem";
 let localState: Record<string, any> = {};
 let saveTimeout: number | undefined;
 let draggedRowId: string | null = null;
@@ -16,10 +13,12 @@ let dragProxy: HTMLElement | null = null;
 let dragOffsetX = 0;
 let dragOffsetY = 0;
 
-const preventDefaultDragOver = (e: DragEvent) => {
-	e.preventDefault();
-	if (e.dataTransfer) e.dataTransfer.dropEffect = 'move';
-};
+//********* DEFINE SIGNED AND UNSIGNED ATTRIBUTES **********/
+const signed = ["attack", "defense", "vim", "charm", "inspire", "mettle", "perception", "vigor", "athletics", "intimidate", "might", "vitality", "knack", "nimbleness", "search", "sneak", "trickery", "knowhow", "lore", "realms", "tinker", "wilderness", "treasure_hunting"];
+const unsigned = ["courage", "courage_max", "quest_pts", "block", "inventory_slots", "inventory_slots_max", "material_number", "coins_copper", "coins_silver", "coins_gold", "coins_ancient", "rations_d6", "rations_d8", "rations_d10", "lv", "xp"];
+const textfields = ["character_name", "class", "folk", "homeland", "proficiencies", "conditions", "deficiencies", "heroic_titles", "dread", "worn", "carried", "material_elemental", "material_fish", "material_beast", "material_herb", "ideals", "flaws", "personal_quest", "backstory", "relationships", "other_notes"];
+const checkboxes = ["overburdened", "tired"];
+const radios = ["save_slot", "clamp_modifiers", "clamp_roll_modifier"];
 
 const getAttrs = (attributes: string[], callback: (values: Record<string, string>) => void) => {
 	const values: Record<string, string> = {};
@@ -46,34 +45,75 @@ const setAttrs = (attributes: Record<string, string | number>) => {
 	isScriptChange = true;
 	Object.entries(attributes).forEach(([key, value]) => {
 		const elements = document.querySelectorAll(`[name="attr_${key}"]`);
-		elements.forEach(el => {
-			if (el.tagName === 'SPAN' || el.tagName === 'DIV') {
-				el.textContent = String(value);
+		elements.forEach(element => {
+			// Skip elements inside the repeating section template
+			if (element.closest('fieldset.repeating_skills')) return;
+
+			if (element.tagName === 'SPAN') {
+				element.textContent = String(value);
 			} else {
-				const inputEl = el as HTMLInputElement;
-				if (inputEl) {
-					if (inputEl.type === 'radio') {
-						if (inputEl.value === String(value)) {
-							inputEl.checked = true;
+				const input = element as HTMLInputElement;
+				if (input) {
+					if (input.type === 'radio') {
+						if (input.value === String(value)) {
+							input.checked = true;
 						} else {
-							inputEl.checked = false;
+							input.checked = false;
 						}
-					} else if (inputEl.type === 'checkbox') {
-						const valStr = String(value);
-						if (valStr === (inputEl.value || "on") || valStr === "true" || valStr === "1") {
-							inputEl.checked = true;
-						} else {
-							inputEl.checked = false;
-						}
+					} else if (input.type === 'checkbox') {
+						input.checked = String(value) === 'true';
+						value = input.checked ? "true" : "false";
 					} else {
-						inputEl.value = String(value);
-						inputEl.setAttribute('value', String(value));
+						input.value = String(value);
+						input.setAttribute('value', String(value));
 					}
-					inputEl.dispatchEvent(new Event('change', { bubbles: true }));
+					//input.dispatchEvent(new Event('change', { bubbles: true }));
+				}
+			}
+			// Save the new value
+			if (!isLoading) {
+				console.log("Saving attribute change to metadata...");
+				saveSheetData({ [key]: value });
+			}
+		});
+	});
+	isScriptChange = false;
+};
+
+const resetAttrs = (updateDOM = true) => {
+	console.log("Resetting attributes to default values...");
+	isScriptChange = true;
+	localState = {};
+
+	const allAttrs = [...signed, ...unsigned, ...textfields, ...checkboxes, ...radios];
+
+	allAttrs.forEach(key => {
+		const elements = document.querySelectorAll(`[name="attr_${key}"]`);
+		elements.forEach(element => {
+			if (element.tagName === 'SPAN') {
+				if (updateDOM) element.textContent = '';
+			} else {
+				const input = element as HTMLInputElement;
+				if (input) {
+					if (input.type === 'radio') {
+						if (updateDOM) input.checked = input.defaultChecked;
+						if (input.defaultChecked) localState[key] = input.value;
+					} else if (input.type === 'checkbox') {
+						if (updateDOM) input.checked = input.defaultChecked;
+						if (input.defaultChecked) localState[key] = input.value || "on";
+						else localState[key] = "0";
+					} else {
+						if (updateDOM) input.value = input.defaultValue;
+						localState[key] = input.defaultValue;
+					}
 				}
 			}
 		});
 	});
+
+	// Clear repeating sections
+	if (updateDOM) document.querySelectorAll('.repcontainer').forEach(el => el.innerHTML = '');
+
 	isScriptChange = false;
 };
 
@@ -85,13 +125,17 @@ const saveSheetData = (data: Record<string, any>) => {
 
 	// Debounce save
 	if (saveTimeout) clearTimeout(saveTimeout);
+	console.log("Scheduling save to Metadata in 500ms...");
 	saveTimeout = window.setTimeout(async () => {
-		console.log("Saving to Room Metadata:", localState);
+		console.log("Saving to Metadata:", localState);
 		try {
 			const playerId = await OBR.player.getId();
-			const key = `${ID}/player/${playerId}`;
-			await OBR.room.setMetadata({ [key]: localState });
-			console.log("Save completed successfully to:", key);
+			let saveSlot;
+			await getAttrs(['save_slot'], (vals) => saveSlot = vals['save_slot']);
+			let key = `${ID}/players/${playerId}/save_slot_${saveSlot || 1}`;
+			localStorage.setItem(key, JSON.stringify(localState));
+			localStorage.setItem(`${ID}/players/${playerId}/last_save_slot`, String(saveSlot || 1));
+			console.log("Save completed successfully local storage at:", key);
 		} catch (error) {
 			console.error("Error saving metadata:", error);
 		}
@@ -101,15 +145,19 @@ const saveSheetData = (data: Record<string, any>) => {
 const loadSheetData = async () => {
 	console.log("Loading sheet data...");
 	isLoading = true;
+	resetAttrs(false);
 	try {
 		const playerId = await OBR.player.getId();
 		console.log("Player ID:", playerId);
-		const key = `${ID}/player/${playerId}`;
-		const metadata = await OBR.room.getMetadata();
-		console.log("Room Metadata loaded");
-		localState = (metadata[key] as Record<string, any>) || {};
-		console.log("Sheet data to set:", localState);
+		const saveSlot = localStorage.getItem(`${ID}/players/${playerId}/last_save_slot`) || "1";
+		let key = `${ID}/players/${playerId}/save_slot_${saveSlot}`;
+		console.log("Loading from local storage key:", key);
+		localState = { ...localState, ...JSON.parse(localStorage.getItem(key) || "{}") };
 
+		// Ensure save_slot is set to the current slot, even if data was empty
+		localState["save_slot"] = saveSlot;
+
+		console.log("Local data loaded", localState);
 		// Initialize repeating sections from array if exists
 		if (localState.repeating_skills && Array.isArray(localState.repeating_skills)) {
 			reconstructRepeatingSections(localState.repeating_skills);
@@ -117,112 +165,16 @@ const loadSheetData = async () => {
 			// Legacy support or empty
 			reconstructRepeatingSections([]);
 		}
-
 		setAttrs(localState);
 	} catch (error) {
 		console.error("Error loading sheet data:", error);
 	}
+	validate_data();
 	isLoading = false;
 	console.log("Sheet data loaded.");
 };
 
-// Global synchronization for all attributes
-document.querySelectorAll<HTMLInputElement>('[name^="attr_"]').forEach(input => {
-	input.addEventListener('change', (e) => {
-		const target = e.target as HTMLInputElement;
-		if (!isScriptChange) {
-			// Update the target's attribute for CSS selectors
-			if (target.type !== 'radio' && target.type !== 'checkbox') {
-				target.setAttribute('value', target.value);
-			}
-
-			const allSameName = document.querySelectorAll(`[name="${target.name}"]`);
-			allSameName.forEach(other => {
-				if (other !== target) {
-					const otherInput = other as HTMLInputElement;
-					if (target.type === 'radio') {
-						if (target.checked && otherInput.value === target.value) {
-							otherInput.checked = true;
-						}
-					} else if (target.type === 'checkbox') {
-						otherInput.checked = target.checked;
-					} else {
-						otherInput.value = target.value;
-						otherInput.setAttribute('value', target.value);
-					}
-				}
-			});
-		}
-
-		if (!isLoading) {
-			const attrName = target.name.replace('attr_', '');
-			let value = target.value;
-			if (target.type === 'checkbox') {
-				value = target.checked ? (target.value || "on") : "0";
-			}
-			saveSheetData({ [attrName]: value });
-		}
-	});
-});
-
-const on = (eventStr: string, callback: (eventInfo: any) => void) => {
-	const events = eventStr.split(' ');
-	events.forEach(event => {
-		if (event.startsWith('change:')) {
-			const attr = event.replace('change:', '');
-			const elements = document.querySelectorAll(`[name="attr_${attr}"]`);
-			elements.forEach(el => {
-				el.addEventListener('change', (e) => {
-					const target = e.target as HTMLInputElement;
-					const eventInfo = {
-						sourceAttribute: attr,
-						sourceType: isScriptChange ? 'sheetworker' : 'player',
-						previousValue: target.getAttribute('data-prev') || "",
-						newValue: target.type === 'checkbox' ? (target.checked ? (target.value || "on") : "0") : target.value
-					};
-					target.setAttribute('data-prev', eventInfo.newValue);
-					callback(eventInfo);
-				});
-			});
-		} else if (event.startsWith('clicked:')) {
-			const btnName = event.replace('clicked:', '');
-			const elements = document.querySelectorAll(`[name="act_${btnName}"]`);
-			elements.forEach(el => {
-				el.addEventListener('click', () => {
-					callback({ sourceType: 'player' });
-				});
-			});
-		} else if (event === 'sheet:opened') {
-			// Call immediately as the sheet is already loaded
-			callback({ sourceType: 'sheetworker' });
-		}
-	});
-};
-
-const getTranslationByKey = (key: string) => key;
-
-const generateRowID = () => "row" + Math.random().toString(36).substr(2, 9);
-
-//********* REPEATING SECTIONS SUPPORT **********/
-const updateInputNames = (element: HTMLElement, rowId: string) => {
-	const inputs = element.querySelectorAll('[name^="attr_"]');
-	inputs.forEach(el => {
-		const input = el as HTMLInputElement;
-		const name = input.getAttribute('name');
-		if (name) {
-			const newName = name.replace('attr_', `attr_repeating_skills_${rowId}_`);
-			input.setAttribute('name', newName);
-			// Also update class if it matches the name (sometimes used)
-		}
-	});
-	// Also check the element itself if it's an input
-	if (element.hasAttribute('name') && element.getAttribute('name')?.startsWith('attr_')) {
-		const name = element.getAttribute('name')!;
-		const newName = name.replace('attr_', `attr_repeating_skills_${rowId}_`);
-		element.setAttribute('name', newName);
-	}
-};
-
+// Attach input listeners for repeating sections and special cases
 const attachInputListeners = (element: HTMLElement) => {
 	element.querySelectorAll<HTMLInputElement>('[name^="attr_"]').forEach(input => {
 		// Auto-expand logic
@@ -278,6 +230,7 @@ const attachInputListeners = (element: HTMLElement) => {
 
 						if (itemIndex >= 0) {
 							skills[itemIndex] = { ...skills[itemIndex], [field]: value };
+							console.log("Updating repeating_skills row:", rowId, "field:", field, "to value:", value, "Full item:", skills);
 							saveSheetData({ repeating_skills: skills });
 						}
 					}
@@ -313,8 +266,17 @@ const createRepeatingRow = (container: HTMLElement, fieldset: HTMLFieldSetElemen
 	// Clone all children of the fieldset
 	Array.from(fieldset.children).forEach(child => {
 		const clone = child.cloneNode(true) as HTMLElement;
-		updateInputNames(clone, rowId);
 		item.appendChild(clone);
+	});
+
+	// Rename inputs to include rowId
+	item.querySelectorAll('[name^="attr_"]').forEach(el => {
+		const input = el as HTMLInputElement;
+		const name = input.getAttribute('name');
+		if (name) {
+			const newName = name.replace('attr_', `attr_repeating_skills_${rowId}_`);
+			input.setAttribute('name', newName);
+		}
 	});
 
 	// Set initial values if provided
@@ -351,16 +313,26 @@ const createRepeatingRow = (container: HTMLElement, fieldset: HTMLFieldSetElemen
 				}
 			});
 		});
+	} else {
+		// Clear potential dirty values from template
+		item.querySelectorAll('input[type="text"], textarea').forEach(el => {
+			const input = el as HTMLInputElement;
+			input.value = "";
+			input.setAttribute('value', "");
+			if (input.tagName === 'TEXTAREA' && input.parentElement?.classList.contains('sheet-auto-expand')) {
+				const span = input.parentElement?.querySelector('span');
+				if (span) span.textContent = "";
+			}
+		});
 	}
 
 	// Add delete listener
 	const delBtn = item.querySelector('.repcontrol_del');
 	if (delBtn) {
 		delBtn.addEventListener('click', () => {
-			if (confirm('Are you sure you want to delete this item?')) {
-				item.remove();
-				deleteRepeatingRowData(rowId);
-			}
+			item.remove();
+			deleteRepeatingRowData(rowId);
+
 		});
 	}
 
@@ -450,7 +422,6 @@ const createRepeatingRow = (container: HTMLElement, fieldset: HTMLFieldSetElemen
 			setTimeout(() => item.classList.add('dragging'), 0);
 
 			// Enforce cursor style globally
-			document.addEventListener('dragover', preventDefaultDragOver, true);
 			document.body.classList.add('is-dragging');
 
 			e.stopPropagation();
@@ -463,7 +434,6 @@ const createRepeatingRow = (container: HTMLElement, fieldset: HTMLFieldSetElemen
 		});
 
 		moveHandle.addEventListener('dragend', () => {
-			document.removeEventListener('dragover', preventDefaultDragOver, true);
 			document.body.classList.remove('is-dragging');
 
 			draggedRowId = null;
@@ -532,12 +502,11 @@ const initRepeatingSections = () => {
 
 		if (addBtn && repContainer && fieldset) {
 			addBtn.addEventListener('click', () => {
-				const rowId = generateRowID();
+				const rowId = crypto.randomUUID();
 				// Add to array
 				const skills = (localState.repeating_skills as any[]) || [];
 				skills.push({ id: rowId });
 				saveSheetData({ repeating_skills: skills });
-
 				createRepeatingRow(repContainer as HTMLElement, fieldset as HTMLFieldSetElement, rowId);
 			});
 		}
@@ -567,6 +536,8 @@ const reconstructRepeatingSections = (data: any[]) => {
 	// Clear existing to prevent duplicates on reload/re-render
 	container.innerHTML = '';
 
+	console.log("Reconstructing repeating sections with data:", data);
+
 	data.forEach(item => {
 		if (item && item.id) {
 			createRepeatingRow(container, fieldset, item.id, item);
@@ -577,16 +548,99 @@ const reconstructRepeatingSections = (data: any[]) => {
 //********* TAB BUTTONS **********/
 const buttonlist = ["attributes", "inventory", "background", "notes", "settings"]
 buttonlist.forEach(button => {
-	on(`clicked:${button}`, function () {
-		setAttrs({
-			sheetTab: button
-		})
-	})
+	const elements = document.querySelectorAll(`[name="act_${button}"]`);
+	elements.forEach(el => {
+		el.addEventListener('click', () => {
+			setAttrs({
+				sheetTab: button
+			})
+		});
+	});
 })
 
-//********* DEFINE SIGNED AND UNSIGNED ATTRIBUTES **********/
-const signed = ["attack", "defense", "vim", "charm", "inspire", "mettle", "perception", "vigor", "athletics", "intimidate", "might", "vitality", "knack", "nimbleness", "search", "sneak", "trickery", "knowhow", "lore", "realms", "tinker", "wilderness", "treasure_hunting"];
-const unsigned = ["courage", "courage_max", "quest_pts", "block", "inventory_slots", "inventory_slots_max", "material_number", "coins_copper", "coins_silver", "coins_gold", "coins_ancient", "rations_d6", "rations_d8", "rations_d10", "lv", "xp"];
+//********* IMPORT / EXPORT **********/
+const exportButton = document.querySelector(`[name="act_export"]`);
+if (exportButton) {
+	exportButton.addEventListener('click', () => {
+		const dataStr = JSON.stringify(localState, null, 2);
+		const blob = new Blob([dataStr], { type: "application/json" });
+		const url = URL.createObjectURL(blob);
+		const a = document.createElement('a');
+		a.href = url;
+		const charName = localState['character_name'] || 'character';
+		a.download = `${charName}.json`;
+		document.body.appendChild(a);
+		a.click();
+		document.body.removeChild(a);
+		URL.revokeObjectURL(url);
+	});
+}
+
+const importButton = document.querySelector(`[name="act_import"]`);
+if (importButton) {
+	importButton.addEventListener('click', () => {
+		const input = document.createElement('input');
+		input.type = 'file';
+		input.accept = '.json';
+		input.onchange = (e) => {
+			const file = (e.target as HTMLInputElement).files?.[0];
+			if (!file) return;
+			const reader = new FileReader();
+			reader.onload = (e) => {
+				try {
+					const content = e.target?.result as string;
+					const data = JSON.parse(content);
+
+					isLoading = true;
+
+					// Preserve current save slot
+					const currentSaveSlot = localState['save_slot'] || 1;
+
+					// Reset current state
+					resetAttrs();
+
+					// Update local state
+					localState = { ...localState, ...data };
+
+					// Restore save slot
+					localState['save_slot'] = currentSaveSlot;
+
+					// Reconstruct repeating sections if present
+					if (localState.repeating_skills && Array.isArray(localState.repeating_skills)) {
+						reconstructRepeatingSections(localState.repeating_skills);
+					} else {
+						reconstructRepeatingSections([]);
+					}
+
+					// Update UI
+					setAttrs(localState);
+
+					// Validate data (fill defaults)
+					validate_data();
+
+					// Sync localState with DOM after validation
+					const allAttrs = [...signed, ...unsigned, ...textfields, ...checkboxes, ...radios];
+					getAttrs(allAttrs, (values) => {
+						localState = { ...localState, ...values };
+						isLoading = false;
+						// Save to storage
+						saveSheetData(localState);
+						console.log("Import successful");
+					});
+
+				} catch (err) {
+					console.error("Error importing file:", err);
+					alert("Error importing file. Please check the console for details.");
+					isLoading = false;
+				}
+			};
+			reader.readAsText(file);
+		};
+		input.click();
+	});
+}
+
+
 
 //********* DEFINE CUSTOM FUNCTIONS **********/
 const updateStats = (statNames: string[], difference: number) => {
@@ -605,95 +659,195 @@ const updateStats = (statNames: string[], difference: number) => {
 	return result
 }
 
-//********* VALIDATE SIGNED NUMBER VALUES ON CHANGE **********/
-on(signed.map(field => "change:" + field).join(" "), (eventinfo) => {
-	const fieldName = eventinfo.sourceAttribute
-	getAttrs([fieldName, "clamp_modifiers"], (values) => {
-		//********* IGNORE SHEETWORKER EVENTS **********/
-		if (eventinfo.sourceType === "sheetworker") {
-			return
-		}
-		const clamp = values["clamp_modifiers"] === "true"
-		//********* CLAMP TO -3 +3 AND SET THE VALUE **********/
-		let oldValue = parseInt(eventinfo.previousValue) || 0
-		let val: string | number = parseInt(values[fieldName])
-		if (isNaN(val)) {
-			val = "+0"
-		}
-		else if (clamp && val < -3) {
-			val = "-3"
-		}
-		else if (clamp && val > 3) {
-			val = "+3"
-		}
-		else if (val >= 0) {
-			val = "+" + val
-		}
-		setAttrs({
-			[fieldName]: val
+signed.forEach(fieldName => {
+	const elements = document.querySelectorAll(`[name="attr_${fieldName}"]`);
+	elements.forEach(el => {
+		el.addEventListener('focus', (e) => {
+			const target = e.target as HTMLInputElement;
+			let oldValue = parseInt(target.getAttribute('value') || "0")
+			if (isNaN(oldValue)) {
+				oldValue = 0
+			}
+			target.setAttribute('data-oldvalue', oldValue > 0 ? ("+" + oldValue) : oldValue.toString())
+		});
+		el.addEventListener('change', (e) => {
+			if (isScriptChange) {
+				return
+			}
+			const target = e.target as HTMLInputElement;
+			let oldValue = parseInt(target.getAttribute('data-oldvalue') || "0")
+			getAttrs([fieldName, "clamp_modifiers"], (values) => {
+				//********* IGNORE SHEETWORKER EVENTS **********/
+				const clamp = values["clamp_modifiers"] === "true"
+				//********* CLAMP TO -3 +3 **********/
+				let newValue = parseInt(target.value)
+				if (isNaN(newValue)) {
+					newValue = 0
+				}
+				else if (clamp && newValue < -3) {
+					newValue = -3
+				}
+				else if (clamp && newValue > 3) {
+					newValue = 3
+				}
+				setAttrs({
+					[fieldName]: newValue > 0 ? ("+" + newValue) : newValue.toString()
+				})
+				const difference = (newValue - oldValue)
+				//********* SYNC ABILITIES AND STATS WITH THEIR ATTRIBUTES **********/
+				console.log("Attribute Change Detected: " + fieldName + " from " + oldValue + " to " + newValue + " (diff " + difference + ")")
+				if (fieldName === "vim") {
+					updateStats(["charm", "inspire", "mettle", "perception"], difference)
+					getAttrs(["courage", "courage_max"], (vals) => {
+						setAttrs({
+							courage_max: parseInt(vals["courage_max"]) + difference,
+							courage: parseInt(vals["courage"]) + difference
+						})
+					})
+
+				}
+				else if (fieldName === "vigor") {
+					const newVals = updateStats(["athletics", "intimidate", "might", "vitality"], difference)
+					setAttrs({
+						attack: newValue,
+						inventory_slots_max: 20 + parseInt(String(newVals["might"])) + parseInt(String(newVals["vitality"]))
+					})
+				}
+				else if (fieldName === "knack") {
+					updateStats(["nimbleness", "search", "sneak", "trickery"], difference)
+					setAttrs({
+						defense: parseInt(String(newValue)) > 0 ? -parseInt(String(newValue)) : "+" + (-parseInt(String(newValue))),
+					})
+				}
+				else if (fieldName === "knowhow") {
+					updateStats(["lore", "realms", "tinker", "wilderness"], difference)
+					setAttrs({
+						quest_pts: parseInt(String(newValue)) + 3
+					})
+				}
+				else if (fieldName === "might") {
+					getAttrs(["vitality"], (vals) => {
+						setAttrs({
+							inventory_slots_max: 20 + parseInt(String(newValue)) + parseInt(vals["vitality"])
+						})
+					})
+				}
+				else if (fieldName === "vitality") {
+					getAttrs(["might"], (vals) => {
+						setAttrs({
+							inventory_slots_max: 20 + parseInt(String(newValue)) + parseInt(vals["might"])
+						})
+					})
+				}
+			})
+		});
+	});
+});
+
+unsigned.forEach(fieldName => {
+	const elements = document.querySelectorAll(`[name="attr_${fieldName}"]`);
+	elements.forEach(el => {
+		el.addEventListener('change', (e) => {
+			const target = e.target as HTMLInputElement;
+			//********* IGNORE SHEETWORKER EVENTS **********/
+			if (isScriptChange) {
+				return
+			}
+			const newValue = parseInt(target.value)
+			if (isNaN(newValue)) {
+				setAttrs({
+					[fieldName]: 0
+				})
+			}
+			else {
+				setAttrs({
+					[fieldName]: newValue
+				})
+			}
+		});
+	});
+});
+
+textfields.forEach(fieldName => {
+	const elements = document.querySelectorAll(`[name="attr_${fieldName}"`);
+	elements.forEach(el => {
+		el.addEventListener('change', (e) => {
+			//********* IGNORE SHEETWORKER EVENTS **********/
+			if (isScriptChange) {
+				return
+			}
+			const target = e.target as HTMLInputElement;
+			setAttrs({
+				[fieldName]: target.value
+			})
 		})
-		const difference = (parseInt(String(val)) - oldValue)
-		//********* SYNC ABILITIES AND STATS WITH THEIR ATTRIBUTES **********/
-		if (fieldName === "vim") {
-			updateStats(["charm", "inspire", "mettle", "perception"], difference)
-			getAttrs(["courage", "courage_max"], (vals) => {
-				setAttrs({
-					courage_max: parseInt(vals["courage_max"]) + difference,
-					courage: parseInt(vals["courage"]) + difference
-				})
-			})
+	})
+})
 
-		}
-		else if (fieldName === "vigor") {
-			const newVals = updateStats(["athletics", "intimidate", "might", "vitality"], difference)
+radios.forEach(fieldName => {
+	const elements = document.querySelectorAll(`[name="attr_${fieldName}"`);
+	if (fieldName === "save_slot") {
+		elements.forEach(el => {
+			el.addEventListener('change', async (e) => {
+				//********* IGNORE SHEETWORKER EVENTS **********/
+				if (isScriptChange || isLoading) {
+					return
+				}
+				const target = e.target as HTMLInputElement;
+
+				// Cancel any pending save to prevent overwriting the new slot with old data
+				if (saveTimeout) clearTimeout(saveTimeout);
+
+				const playerId = await OBR.player.getId();
+
+				// Save current state to the previous slot
+				const oldSlot = localState["save_slot"] || 1;
+				const oldKey = `${ID}/players/${playerId}/save_slot_${oldSlot}`;
+				console.log(`Saving previous slot ${oldSlot} before switching...`);
+				localStorage.setItem(oldKey, JSON.stringify(localState));
+
+				let saveSlot = parseInt(target.value);
+				// Save the selected save slot
+				localStorage.setItem(`${ID}/players/${playerId}/last_save_slot`, String(saveSlot || 1));
+				// Load the selected save slot
+				console.log("Loading save slot " + saveSlot);
+				await loadSheetData();
+				console.log("Save slot " + saveSlot + " loaded.", localState);
+			});
+		});
+	}
+	else elements.forEach(el => {
+		el.addEventListener('change', (e) => {
+			//********* IGNORE SHEETWORKER EVENTS **********/
+			if (isScriptChange) {
+				return
+			}
+			const target = e.target as HTMLInputElement;
 			setAttrs({
-				attack: val,
-				inventory_slots_max: 20 + parseInt(String(newVals["might"])) + parseInt(String(newVals["vitality"]))
+				[fieldName]: target.value
 			})
-		}
-		else if (fieldName === "knack") {
-			updateStats(["nimbleness", "search", "sneak", "trickery"], difference)
-			setAttrs({
-				defense: parseInt(String(val)) > 0 ? -parseInt(String(val)) : "+" + (-parseInt(String(val))),
-			})
-		}
-		else if (fieldName === "knowhow") {
-			updateStats(["lore", "realms", "tinker", "wilderness"], difference)
-			setAttrs({
-				quest_pts: parseInt(String(val)) + 3
-			})
-		}
-		else if (fieldName === "might") {
-			getAttrs(["vitality"], (vals) => {
-				setAttrs({
-					inventory_slots_max: 20 + parseInt(String(val)) + parseInt(vals["vitality"])
-				})
-			})
-		}
-		else if (fieldName === "vitality") {
-			getAttrs(["might"], (vals) => {
-				setAttrs({
-					inventory_slots_max: 20 + parseInt(String(val)) + parseInt(vals["might"])
-				})
-			})
-		}
+		})
 	})
 })
-//********* VALIDATE UNSIGNED NUMBER VALUES ON CHANGE (FOR FIREFOX BROWSER) **********/
-on(unsigned.map(field => "change:" + field).join(" "), (eventinfo) => {
-	const fieldName = eventinfo.sourceAttribute
-	getAttrs([fieldName], (values) => {
-		let val = parseInt(values[fieldName])
-		if (isNaN(val)) {
+
+checkboxes.forEach(fieldName => {
+	const elements = document.querySelectorAll(`[name="attr_${fieldName}"`);
+	elements.forEach(el => {
+		el.addEventListener('change', (e) => {
+			//********* IGNORE SHEETWORKER EVENTS **********/
+			if (isScriptChange) {
+				return
+			}
+			const target = e.target as HTMLInputElement;
 			setAttrs({
-				[fieldName]: 0
+				[fieldName]: target.checked ? "true" : "false"
 			})
-		}
+		})
 	})
 })
+
 //********* VALIDATE ALL NUMBER VALUES ON CHARACTER SHEET OPEN **********/
-on("sheet:opened", () => {
-
+const validate_data = () => {
 	signed.forEach((fieldName) => {
 		getAttrs([fieldName, "clamp_modifiers"], (values) => {
 			let val = parseInt(values[fieldName])
@@ -760,70 +914,46 @@ on("sheet:opened", () => {
 			})
 		}
 	})
-})
-//********* CLASS CHANGE HANDLER **********/
-on("change:class", (eventinfo) => {
-	let key = eventinfo.newValue
-	if (key === getTranslationByKey('bard')) {
-		key = "bard";
-	}
-	else if (key === getTranslationByKey('dungeoneer')) {
-		key = "dungeoneer";
-	}
-	else if (key === getTranslationByKey('gnome')) {
-		key = "gnome";
-	}
-	else if (key === getTranslationByKey('knight-errant')) {
-		key = "knight-errant";
-	}
-	else if (key === getTranslationByKey('loyal-chum')) {
-		key = "loyal-chum";
-	}
-	else if (key === getTranslationByKey('rascal')) {
-		key = "rascal";
-	}
+	//********* SET SHEET VERSION, WE CAN THEN DETECT IF DATA IS OUTDATED **********/
+	setAttrs({
+		version: document.querySelector(`[type="hidden"][name="attr_version"]`)!.getAttribute('value') || "1.0.0"
+	})
+}
+
+document.querySelector(`[name="attr_class"]`)!.addEventListener('change', (e) => {
+	let newClass = (e.target as HTMLInputElement).value;
 
 	getAttrs(["hidden_class", "vim"], (values) => {
 		// Same class - no change needed
-		if (values["hidden_class"] === key) return
+		if (values["hidden_class"] === newClass) return
 
 		const v = parseInt(values["vim"])
 		let dread = "1d4"
 		let courage_max = 12 + v
 
-		if (key === "bard") { dread = "1d4"; courage_max = v + 12; }
-		else if (key === "dungeoneer") { dread = "1d6"; courage_max = v + 13; }
-		else if (key === "gnome") { dread = "1d8"; courage_max = v + 14; }
-		else if (key === "knight-errant") { dread = "1d10"; courage_max = v + 15; }
-		else if (key === "loyal-chum") { dread = "1d6"; courage_max = v + 13; }
-		else if (key === "rascal") { dread = "1d8"; courage_max = v + 14; }
+		if (newClass === "bard") { dread = "1d4"; courage_max = v + 12; }
+		else if (newClass === "dungeoneer") { dread = "1d6"; courage_max = v + 13; }
+		else if (newClass === "gnome") { dread = "1d8"; courage_max = v + 14; }
+		else if (newClass === "knight-errant") { dread = "1d10"; courage_max = v + 15; }
+		else if (newClass === "loyal-chum") { dread = "1d6"; courage_max = v + 13; }
+		else if (newClass === "rascal") { dread = "1d8"; courage_max = v + 14; }
 		else return
 
 		setAttrs({
 			dread: dread,
 			courage_max: courage_max,
 			courage: courage_max,
-			hidden_class: key
+			hidden_class: newClass
 		})
 	})
-})
+});
+
 
 OBR.onReady(async () => {
 	isReady = true;
 	initRepeatingSections();
-	await loadSheetData();
-
-	// Listen for room metadata changes
-	OBR.room.onMetadataChange(async (metadata) => {
-		const playerId = await OBR.player.getId();
-		const key = `${ID}/player/${playerId}`;
-		const newMetadata = metadata[key] as Record<string, string | number>;
-		if (newMetadata) {
-			if (JSON.stringify(newMetadata) !== JSON.stringify(localState)) {
-				console.log("Remote room metadata changed, updating sheet...", newMetadata);
-				localState = newMetadata;
-				setAttrs(localState);
-			}
-		}
+	OBR.player.onChange(async () => {
+		console.log("Metadata change detected");
 	});
+	await loadSheetData();
 });

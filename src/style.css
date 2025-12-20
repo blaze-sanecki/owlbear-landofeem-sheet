@@ -7,28 +7,28 @@
 /* DMSans - Primary Font Family */
 @font-face {
   font-family: 'DMSans';
-  src: url('https://raw.githubusercontent.com/blaze-sanecki/LandOfEem/master/fonts/dm-sans-v17-latin_latin-ext-regular.woff2') format('woff2');
+  src: url('/fonts/dm-sans-v17-latin_latin-ext-regular.woff2') format('woff2');
   font-weight: 400;
   font-style: normal;
 }
 
 @font-face {
   font-family: 'DMSans';
-  src: url('https://raw.githubusercontent.com/blaze-sanecki/LandOfEem/master/fonts/dm-sans-v17-latin_latin-ext-600.woff2') format('woff2');
+  src: url('/fonts/dm-sans-v17-latin_latin-ext-600.woff2') format('woff2');
   font-weight: 600;
   font-style: normal;
 }
 
 @font-face {
   font-family: 'DMSans';
-  src: url('https://raw.githubusercontent.com/blaze-sanecki/LandOfEem/master/fonts/dm-sans-v17-latin_latin-ext-900.woff2') format('woff2');
+  src: url('/fonts/dm-sans-v17-latin_latin-ext-900.woff2') format('woff2');
   font-weight: 900;
   font-style: normal;
 }
 
 @font-face {
   font-family: 'Bird of Feather';
-  src: url('https://raw.githubusercontent.com/blaze-sanecki/LandOfEem/master/fonts/bird-of-feather.woff2') format('woff2');
+  src: url('/fonts/bird-of-feather.woff2') format('woff2');
   font-weight: 400;
   font-style: normal;
 }
@@ -539,7 +539,7 @@ div.container {
 
 .xp-background::after {
   background-color: var(--sheet-primary-color);
-  mask-image: url("https://raw.githubusercontent.com/blaze-sanecki/LandOfEem/master/images/xp_bw.png");
+  mask-image: url("/images/xp_bw.png");
   content: '';
   position: absolute;
   top: -17px;
@@ -641,7 +641,7 @@ div.container {
   margin-left: 4px;
   padding-bottom: 3px;
   background: white;
-  mask-image: url(/settings.svg);
+  mask-image: url(/images/settings.svg);
   mask-size: contain;
   mask-repeat: no-repeat;
   mask-position: 0 2px;
@@ -707,29 +707,44 @@ div.container {
   position: absolute;
   top: 0;
   left: 0;
-  mask-image: url('https://raw.githubusercontent.com/blaze-sanecki/LandOfEem/master/images/logo-flat.png');
+  mask-image: url('/images/logo-flat.png');
   width: 100%;
   height: 100%;
   mask-size: 100%;
   mask-repeat: no-repeat;
 }
 
-.eem .header .top-avatar {
-  margin: 18px auto;
-  height: 62px;
+.eem .header .import-export {
   width: 62px;
-  border: 2px solid var(--sheet-primary-color);
-  border-radius: 4px;
-  object-fit: cover;
+  margin: auto;
+  text-align: center;
 }
 
-.eem .header img.top-avatar:not([src]) {
-  border: none;
-  background-image: url('https://raw.githubusercontent.com/blaze-sanecki/LandOfEem/master/images/stars.png');
-  background-size: contain;
-  background-repeat: no-repeat;
-  outline: 4px solid var(--sheet-background-color);
-  outline-offset: -2px;
+.eem .header .import-export button[name="act_import"],
+.eem .header .import-export button[name="act_export"] {
+  width: 30px;
+  height: 30px;
+  border-radius: 4px;
+  padding: 0;
+  float: none;
+}
+
+.eem .header .import-export button[name="act_import"] div {
+  width: 80%;
+  height: 80%;
+  margin: auto;
+  mask: url('/images/icon-import.svg');
+  mask-size: contain;
+  background-color: var(--sheet-primary-color);
+}
+
+.eem .header .import-export button[name="act_export"] div {
+  width: 80%;
+  height: 80%;
+  margin: auto;
+  mask: url('/images/icon-export.svg');
+  mask-size: contain;
+  background-color: var(--sheet-primary-color);
 }
 
 .header .corner-box label {
@@ -819,7 +834,7 @@ div.container {
 
 /* Dice Field Component */
 .dice-field {
-  background-image: url('https://raw.githubusercontent.com/blaze-sanecki/LandOfEem/master/images/dice.png');
+  background-image: url('/images/dice.png');
   width: 62px;
   height: 71px;
   display: block;
@@ -881,7 +896,7 @@ div.container {
   height: 48px;
   border: none;
   background-color: transparent;
-  background-image: url('https://raw.githubusercontent.com/blaze-sanecki/LandOfEem/master/images/small_frame.svg');
+  background-image: url('/images/small_frame.svg');
   background-repeat: no-repeat;
   background-position: center;
   font-size: 15px;
@@ -906,7 +921,7 @@ label.small {
 /* Stat Box - Courage Variant */
 .stat-box.stat-courage {
   position: relative;
-  background: 0 22px url("https://raw.githubusercontent.com/blaze-sanecki/LandOfEem/master/images/stats_1.png") no-repeat;
+  background: 0 22px url("/images/stats_1.png") no-repeat;
   background-size: auto 58px;
   background-color: rgb(255 255 255 / 80%);
   background-blend-mode: lighten;
@@ -953,7 +968,7 @@ label.small {
 /* Stat Box - Defense Variant */
 .stat-box.stat-defense {
   position: relative;
-  background: 0 21px url("https://raw.githubusercontent.com/blaze-sanecki/LandOfEem/master/images/stats_3.png") no-repeat;
+  background: 0 21px url("/images/stats_3.png") no-repeat;
   background-size: auto 70px;
   background-color: rgb(255 255 255 / 80%);
   background-blend-mode: lighten;
@@ -978,7 +993,7 @@ label.small {
 .stat-box.stat-mettle {
   grid-column: 1;
   position: relative;
-  background: 0 22px url("https://raw.githubusercontent.com/blaze-sanecki/LandOfEem/master/images/stats_6.png") no-repeat;
+  background: 0 22px url("/images/stats_6.png") no-repeat;
   background-size: auto 72px;
   background-color: rgb(255 255 255 / 80%);
   background-blend-mode: lighten;
@@ -992,7 +1007,7 @@ label.small {
 /* Stat Box - Quest Points Variant */
 .stat-box.stat-quest {
   position: relative;
-  background: 0 22px url("https://raw.githubusercontent.com/blaze-sanecki/LandOfEem/master/images/stats_4.png") no-repeat;
+  background: 0 22px url("/images/stats_4.png") no-repeat;
   background-size: 90px 68px;
   background-color: rgb(255 255 255 / 80%);
   background-blend-mode: lighten;
@@ -1173,7 +1188,7 @@ label.small {
 .eem .sheet-inventory .vertical-line {
   height: calc(100% - 15px);
   margin-top: 15px;
-  background: url('https://raw.githubusercontent.com/blaze-sanecki/LandOfEem/master/images/vertical_line.png');
+  background: url('/images/vertical_line.png');
   background-size: 6px 6px;
 }
 
@@ -1467,7 +1482,7 @@ label.small {
   width: 73px;
   height: 68px;
   margin-top: -16px;
-  background-image: url("https://raw.githubusercontent.com/blaze-sanecki/LandOfEem/master/images/treasure.png");
+  background-image: url("/images/treasure.png");
   background-repeat: no-repeat;
   background-size: auto 68px;
   margin-right: -5px;
@@ -1551,9 +1566,16 @@ label.small {
   margin-left: 4px;
 }
 
-.eem .sheet-settings .settings-radio {
+.eem .sheet-settings .settings-onoff {
   display: grid;
-  grid-template-columns: minmax(250px, max-content) min-content min-content min-content min-content 16px auto;
+  grid-template-columns: minmax(250px, max-content) repeat(4, min-content) 16px auto;
+  grid-template-rows: min-content;
+  height: min-content;
+}
+
+.eem .sheet-settings .settings-saveslot {
+  display: grid;
+  grid-template-columns: minmax(250px, max-content) repeat(10, min-content) 16px auto;
   grid-template-rows: min-content;
   height: min-content;
 }
@@ -1687,7 +1709,8 @@ section.hint {
 }
 
 .eem .note-box .repcontrol_add,
-.eem .note-box .repcontrol_edit {
+.eem .note-box .repcontrol_edit,
+.eem .header .import-export button {
   border: 1px solid var(--sheet-primary-color);
   border-style: outset;
   background: linear-gradient(#fff, #fff, var(--sheet-background-color));

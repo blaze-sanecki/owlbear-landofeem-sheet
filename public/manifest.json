@@ -1,10 +1,10 @@
 {
-	"name": "MCC Sheet",
-	"version": "1.0.0",
+	"name": "Land of Eem - Character Sheet",
+	"version": "2.1.0",
 	"manifest_version": 1,
 	"action": {
-		"title": "MCC Sheet",
-		"icon": "/icon.svg",
+		"title": "Land of Eem - Character Sheet",
+		"icon": "/images/icon.svg",
 		"popover": "/",
 		"height": 612,
 		"width": 870
