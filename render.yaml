@@ -3,7 +3,7 @@ services:
     name: owlbear-landofeem-sheet
     runtime: static
     buildCommand: npm run build
-    staticPublishPath: ./dist
+    staticPublishPath: dist
     headers:
       - path: /*
         name: Access-Control-Allow-Origin
