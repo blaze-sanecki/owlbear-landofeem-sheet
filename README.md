@@ -5,9 +5,9 @@ author: Blaze Sanecki
 image: https://raw.githubusercontent.com/blaze-sanecki/owlbear-landofeem-sheet/master/public/images/screenshots/instructions-hero.jpg
 icon: https://raw.githubusercontent.com/blaze-sanecki/owlbear-landofeem-sheet/master/public/images/icon.svg
 tags:
-  - Tool
-  - Automation
-  - Character Sheet
+  - tool
+  - automation
+  - combat
 manifest: https://eem.owlbear.jelonek.quest/manifest.json
 learn-more: https://github.com/blaze-sanecki/owlbear-landofeem-sheet
 ---
