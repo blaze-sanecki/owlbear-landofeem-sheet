@@ -13,19 +13,19 @@ learn-more: https://ko-fi.com/blazesanecki
 ---
 # Land of Eem - Character Sheet
 
-This is an unofficial fan-made sheet created with the official blessing of the Land of Eem creators.
+This is an unofficial fan-made sheet created with permission of the Land of Eem authors.
 
 **Feautures**
 - Custom design matching the Land of Eem official character sheet aesthetic
 - Interactive rolls with advantage/disadvantage support
 - Auto-Recalculation of abilities and stats when changing related attributes
-- Optional modifier validation (total modifier clamped to -3 and +3)
+- Optional modifier validation (keeps total modifier between -3 and +3)
+- Save slots for multiple characters
+- Easy backups with import/export to .json file
 
 **Rolls**
 
 **Advantage/Disadvantage**
-
-**Multiple Characters**
 
 **Support**
 
@@ -37,12 +37,12 @@ This is an unofficial fan-made sheet created with the official blessing of the L
 **License**
 
 This character sheet is a fan work created for use with The Land of Eem tabletop RPG. All Land of Eem intellectual property belongs to Ben Costa & James Parks.
+All used fonts are free for non-commercial use and allow being used as embeded online fonts.
 
 **Fonts Used**
 - Bird of Feather (replacement for the Blackriver font used in the Land of Eem rulebooks)
 - DM Sans (replacement for the New Atten font used in the Land of Eem rulebooks)
 
-All used fonts are free for non-commercial use and allow being used as embeded online fonts.
 
 #### Credits
 
