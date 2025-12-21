@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en" class="modal-modifier">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Roll Modifier</title>
+	<style>
+		body {
+			margin: 0;
+			padding: 20px;
+			color: #cc9133;
+			background-color: #fff;
+			font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			justify-content: center;
+			height: 100vh;
+			box-sizing: border-box;
+			border: 2px solid #cc9133;
+			border-radius: 16px;
+		}
+
+		h3 {
+			margin-top: 0;
+			margin-bottom: 15px;
+			color: #fff;
+			background-color: #cc9133;
+			width: 100%;
+			text-align: center;
+			padding: 8px 0;
+			position: absolute;
+			top: 0;
+			left: 0;
+		}
+
+		input {
+			width: 50px;
+			padding: 8px;
+			margin-top: 40px;
+			margin-bottom: 5px;
+			font-size: 18px;
+			text-align: center;
+			border: 2px solid #cc9133;
+			border-radius: 4px;
+			background-color: #fff4e7;
+			color: #000;
+		}
+
+		.buttons {
+			display: flex;
+			gap: 15px;
+			margin-top: 10px;
+		}
+
+		button {
+			padding: 8px 20px;
+			cursor: pointer;
+			border-radius: 4px;
+			font-weight: bold;
+			font-size: 14px;
+			transition: background-color 0.2s;
+		}
+
+		#confirm {
+			color: #cc9133;
+			background: linear-gradient(#fff, #fff, #fff4e7);
+			border: 1px solid #cc9133;
+		}
+
+		#confirm:hover {
+			color: #000;
+			text-decoration: underline solid 1px #cc9133;
+		}
+
+		#cancel {
+			color: #da3831;
+			background: linear-gradient(#fff, #fff, #f9e7e4);
+			border: 1px solid #da3831;
+		}
+
+		#cancel:hover {
+			color: #000;
+			text-decoration: underline solid 1px #da3831;
+		}
+	</style>
+</head>
+
+<body>
+	<h3>Additional Modifier</h3>
+	<input type="number" id="modifier" value="0" />
+	<div class="buttons">
+		<button id="confirm">Apply</button>
+		<button id="cancel">Cancel</button>
+	</div>
+	<script type="module" src="/src/modifier_modal.ts"></script>
+</body>
+
+</html>

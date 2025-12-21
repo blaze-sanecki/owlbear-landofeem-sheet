@@ -606,6 +606,7 @@ div.container {
 .sheet-inventory,
 .sheet-background,
 .sheet-notes,
+.sheet-history,
 .sheet-settings {
   display: none;
   border: 2px solid var(--sheet-primary-color);
@@ -621,6 +622,7 @@ div.container {
 .eem .sheet-tabstoggle[value="inventory"]~div.nav-bar .sheet-button1,
 .eem .sheet-tabstoggle[value="background"]~div.nav-bar .sheet-button2,
 .eem .sheet-tabstoggle[value="notes"]~div.nav-bar .sheet-button3,
+.eem .sheet-tabstoggle[value="history"]~div.nav-bar .sheet-button4,
 .eem .sheet-tabstoggle[value="settings"]~div.nav-bar .sheet-button5 {
   background-color: #ffffff;
   color: var(--sheet-primary-color);
@@ -657,6 +659,7 @@ div.container {
 .eem .sheet-tabstoggle[value="inventory"]~div.sheet-inventory,
 .eem .sheet-tabstoggle[value="background"]~div.sheet-background,
 .eem .sheet-tabstoggle[value="notes"]~div.sheet-notes,
+.eem .sheet-tabstoggle[value="history"]~div.sheet-history,
 .eem .sheet-tabstoggle[value="settings"]~div.sheet-settings {
   display: grid;
 }
@@ -1166,6 +1169,21 @@ label.small {
 }
 
 .eem .sheet-notes .note-box div {
+  height: calc(100% - 16px - mod(calc(100% - 16px), 21px));
+}
+
+/* ===================================== */
+
+/* HISTORY TAB */
+
+/* ===================================== */
+
+.eem .sheet-history .note-box {
+  margin-top: 4px;
+  padding-bottom: 6px;
+}
+
+.eem .sheet-history .note-box div {
   height: calc(100% - 16px - mod(calc(100% - 16px), 21px));
 }
 
@@ -1719,6 +1737,14 @@ section.hint {
   color: var(--sheet-primary-color);
   padding: 2px 6px;
   cursor: pointer;
+  border-radius: 4px;
+}
+
+.eem .note-box .repcontrol_add:hover,
+.eem .note-box .repcontrol_edit:hover,
+.eem .header .import-export button:hover {
+  color: #000;
+  text-decoration: underline 1px solid #cc9133;
 }
 
 .eem .note-box .repcontrol_edit {
@@ -1753,13 +1779,6 @@ section.hint {
   opacity: 0.5;
 }
 
-/* Disabled green highlight on hover */
-/* .eem .note-box .repcontainer.editmode .repitem:hover .itemcontrol {
-  background-color: rgba(241, 255, 92, 0.60);
-} */
-
-.eem .note-box .repcontrol_add,
-.eem .note-box .repcontrol_edit,
 .eem .note-box .repcontrol_move,
 .eem .note-box .repcontrol_del {
   border: 1px solid var(--sheet-primary-color);
@@ -1770,10 +1789,6 @@ section.hint {
   color: var(--sheet-primary-color);
   border-radius: 4px;
   vertical-align: middle;
-}
-
-.eem .note-box .repcontrol_move,
-.eem .note-box .repcontrol_del {
   float: right;
   width: 14px;
   height: 14px;
@@ -1856,4 +1871,33 @@ section.hint {
 .eem.is-dragging,
 .eem.is-dragging * {
   cursor: move !important;
+}
+
+/* Share Button */
+.btn-share {
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  vertical-align: middle;
+  position: absolute;
+  top: 3px;
+  right: 0;
+}
+
+.btn-share div {
+  width: 100%;
+  height: 100%;
+  mask: url('/images/icon-chat.svg');
+  mask-size: contain;
+  mask-repeat: no-repeat;
+  mask-position: center;
+  background-color: var(--sheet-primary-color);
+}
+
+.btn-share:hover div {
+  background-color: #000;
 }

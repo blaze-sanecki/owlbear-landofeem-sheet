@@ -1,11 +1,15 @@
 import './style.css'
 import OBR from "@owlbear-rodeo/sdk";
+import { rollDice } from './dice';
+import { showCustomNotification } from './notification';
+import { showContextMenu } from './context_menu';
 
 // Helper functions
 let isScriptChange = false;
 let isLoading = false;
 let isReady = false;
 const ID = "quest.jelonek.owlbear.eem";
+const ROOM_METADATA_ID = "quest.jelonek.owlbear.eem/room_data";
 let localState: Record<string, any> = {};
 let saveTimeout: number | undefined;
 let draggedRowId: string | null = null;
@@ -72,7 +76,6 @@ const setAttrs = (attributes: Record<string, string | number>) => {
 			}
 			// Save the new value
 			if (!isLoading) {
-				console.log("Saving attribute change to metadata...");
 				saveSheetData({ [key]: value });
 			}
 		});
@@ -125,9 +128,7 @@ const saveSheetData = (data: Record<string, any>) => {
 
 	// Debounce save
 	if (saveTimeout) clearTimeout(saveTimeout);
-	console.log("Scheduling save to Metadata in 500ms...");
 	saveTimeout = window.setTimeout(async () => {
-		console.log("Saving to Metadata:", localState);
 		try {
 			const playerId = await OBR.player.getId();
 			let saveSlot;
@@ -143,21 +144,18 @@ const saveSheetData = (data: Record<string, any>) => {
 };
 
 const loadSheetData = async () => {
-	console.log("Loading sheet data...");
 	isLoading = true;
 	resetAttrs(false);
 	try {
 		const playerId = await OBR.player.getId();
-		console.log("Player ID:", playerId);
 		const saveSlot = localStorage.getItem(`${ID}/players/${playerId}/last_save_slot`) || "1";
 		let key = `${ID}/players/${playerId}/save_slot_${saveSlot}`;
-		console.log("Loading from local storage key:", key);
 		localState = { ...localState, ...JSON.parse(localStorage.getItem(key) || "{}") };
 
 		// Ensure save_slot is set to the current slot, even if data was empty
 		localState["save_slot"] = saveSlot;
 
-		console.log("Local data loaded", localState);
+		console.log("Local data loaded", key, localState);
 		// Initialize repeating sections from array if exists
 		if (localState.repeating_skills && Array.isArray(localState.repeating_skills)) {
 			reconstructRepeatingSections(localState.repeating_skills);
@@ -171,7 +169,6 @@ const loadSheetData = async () => {
 	}
 	validate_data();
 	isLoading = false;
-	console.log("Sheet data loaded.");
 };
 
 // Attach input listeners for repeating sections and special cases
@@ -230,7 +227,6 @@ const attachInputListeners = (element: HTMLElement) => {
 
 						if (itemIndex >= 0) {
 							skills[itemIndex] = { ...skills[itemIndex], [field]: value };
-							console.log("Updating repeating_skills row:", rowId, "field:", field, "to value:", value, "Full item:", skills);
 							saveSheetData({ repeating_skills: skills });
 						}
 					}
@@ -260,7 +256,7 @@ const createRepeatingRow = (container: HTMLElement, fieldset: HTMLFieldSetElemen
 	const control = document.createElement('div');
 	control.classList.add('itemcontrol');
 	control.style.display = container.classList.contains('editmode') ? 'block' : 'none';
-	control.innerHTML = `<button type="button" class="btn btn-danger pictos repcontrol_del">⨯</button><a class="btn repcontrol_move" draggable="true">≡</a>`;
+	control.innerHTML = `<button type="button" class="btn btn-danger repcontrol_del">⨯</button><a class="btn repcontrol_move" draggable="true">≡</a>`;
 	item.appendChild(control);
 
 	// Clone all children of the fieldset
@@ -278,6 +274,18 @@ const createRepeatingRow = (container: HTMLElement, fieldset: HTMLFieldSetElemen
 			input.setAttribute('name', newName);
 		}
 	});
+
+	// Attach share button listener
+	const shareBtn = item.querySelector('button[name="act_share"]');
+	if (shareBtn) {
+		shareBtn.addEventListener('click', async () => {
+			const skill = localState.repeating_skills?.find((s: any) => s.id === rowId);
+			const name = (skill["skillname"] || "Unknown Skill").toUpperCase();
+			const desc = (skill["skilldescription"] || "").replace(/\n/g, '<br>');
+			showCustomNotification(name, desc);
+		});
+	}
+
 
 	// Set initial values if provided
 	if (initialValues) {
@@ -349,7 +357,6 @@ const createRepeatingRow = (container: HTMLElement, fieldset: HTMLFieldSetElemen
 			e.preventDefault();
 		});
 		moveHandle.addEventListener('dragstart', (e) => {
-			console.log("Drag Start");
 			draggedRowId = rowId;
 			e.dataTransfer!.effectAllowed = 'move';
 			e.dataTransfer!.setData('text/plain', rowId);
@@ -521,6 +528,9 @@ const initRepeatingSections = () => {
 				repContainer.querySelectorAll('.repitem').forEach(item => {
 					const control = item.querySelector('.itemcontrol');
 					if (control) (control as HTMLElement).style.display = isEdit ? 'block' : 'none';
+					const share = item.querySelector('.btn-share');
+					if (share) (share as HTMLElement).style.display = isEdit ? 'none' : '';
+
 				});
 			});
 		}
@@ -536,8 +546,6 @@ const reconstructRepeatingSections = (data: any[]) => {
 	// Clear existing to prevent duplicates on reload/re-render
 	container.innerHTML = '';
 
-	console.log("Reconstructing repeating sections with data:", data);
-
 	data.forEach(item => {
 		if (item && item.id) {
 			createRepeatingRow(container, fieldset, item.id, item);
@@ -546,7 +554,7 @@ const reconstructRepeatingSections = (data: any[]) => {
 };
 
 //********* TAB BUTTONS **********/
-const buttonlist = ["attributes", "inventory", "background", "notes", "settings"]
+const buttonlist = ["attributes", "inventory", "background", "notes", "history", "settings"]
 buttonlist.forEach(button => {
 	const elements = document.querySelectorAll(`[name="act_${button}"]`);
 	elements.forEach(el => {
@@ -567,8 +575,10 @@ if (exportButton) {
 		const url = URL.createObjectURL(blob);
 		const a = document.createElement('a');
 		a.href = url;
-		const charName = localState['character_name'] || 'character';
-		a.download = `${charName}.json`;
+		const date = new Date();
+		const timestamp = date.toLocaleDateString('en-US').replace(/\//g, '-') + '_' + date.toLocaleTimeString('en-US').replace(/:/g, '-').replace(/ /g, '_');
+		const charName = (localState['character_name'] || 'character').replace(/ /g, '_');
+		a.download = `${charName}_${timestamp}.json`;
 		document.body.appendChild(a);
 		a.click();
 		document.body.removeChild(a);
@@ -691,11 +701,10 @@ signed.forEach(fieldName => {
 					newValue = 3
 				}
 				setAttrs({
-					[fieldName]: newValue > 0 ? ("+" + newValue) : newValue.toString()
+					[fieldName]: newValue >= 0 ? ("+" + newValue) : newValue.toString()
 				})
 				const difference = (newValue - oldValue)
 				//********* SYNC ABILITIES AND STATS WITH THEIR ATTRIBUTES **********/
-				console.log("Attribute Change Detected: " + fieldName + " from " + oldValue + " to " + newValue + " (diff " + difference + ")")
 				if (fieldName === "vim") {
 					updateStats(["charm", "inspire", "mettle", "perception"], difference)
 					getAttrs(["courage", "courage_max"], (vals) => {
@@ -803,14 +812,12 @@ radios.forEach(fieldName => {
 				// Save current state to the previous slot
 				const oldSlot = localState["save_slot"] || 1;
 				const oldKey = `${ID}/players/${playerId}/save_slot_${oldSlot}`;
-				console.log(`Saving previous slot ${oldSlot} before switching...`);
 				localStorage.setItem(oldKey, JSON.stringify(localState));
 
 				let saveSlot = parseInt(target.value);
 				// Save the selected save slot
 				localStorage.setItem(`${ID}/players/${playerId}/last_save_slot`, String(saveSlot || 1));
 				// Load the selected save slot
-				console.log("Loading save slot " + saveSlot);
 				await loadSheetData();
 				console.log("Save slot " + saveSlot + " loaded.", localState);
 			});
@@ -948,12 +955,186 @@ document.querySelector(`[name="attr_class"]`)!.addEventListener('change', (e) =>
 	})
 });
 
+const updateRoomRollHistory = async (newEntry: string) => {
+	const metadata = await OBR.room.getMetadata();
+	const currentHistory = (metadata[ROOM_METADATA_ID] as any)?.roll_history || "";
+	const maxEntries = 18;
+
+	// Limit history to maxEntries
+	const historyLines = currentHistory.split('\n').filter((line: string) => line.trim() !== '');
+	if (historyLines.length >= maxEntries) {
+		historyLines.splice(maxEntries - 1); // Keep only the most recent entries
+	}
+	const trimmedHistory = historyLines.join('\n');
+	const newHistory = newEntry + "\n" + trimmedHistory;
+	await OBR.room.setMetadata({
+		[ROOM_METADATA_ID]: {
+			roll_history: newHistory
+		}
+	});
+};
+
+const loadRoomRollHistory = async () => {
+	const metadata = await OBR.room.getMetadata();
+	const history = (metadata[ROOM_METADATA_ID] as any)?.roll_history || "";
+	const textarea = document.querySelector('[name="attr_room_roll_history"]') as HTMLTextAreaElement;
+	if (textarea) {
+		textarea.value = history;
+	}
+};
+
+const getAdditionalModifier = (title: string = 'Additional Modifier'): Promise<number | null> => {
+	return new Promise((resolve) => {
+		const channel = new BroadcastChannel('owlbear-landofeem-modifier');
+		const modalId = 'landofeem-modifier-modal';
+		let resolved = false;
+
+		const cleanup = () => {
+			if (resolved) return;
+			resolved = true;
+			channel.close();
+		};
+
+		channel.onmessage = (event) => {
+			if (event.data.type === 'submit') {
+				resolve(event.data.value);
+			} else {
+				resolve(null);
+			}
+			cleanup();
+		};
+
+		OBR.modal.open({
+			id: modalId,
+			url: `/modifier.html?title=${encodeURIComponent(title)}`,
+			height: 160,
+			width: 250,
+		});
+	});
+};
+
+const handleRoll = async (attr: string, rollType: 'normal' | 'advantage' | 'disadvantage', askForModifier: boolean = false) => {
+	let extraMod = 0;
+	let defenseMod = 0;
+
+	if (askForModifier) {
+		const mod = await getAdditionalModifier('Additional Modifier');
+		if (mod === null) return;
+		extraMod = mod;
+	}
+
+	if (attr === 'attack') {
+		const def = await getAdditionalModifier('Adversary Defense');
+		if (def === null) return;
+		defenseMod = def;
+	}
+
+	const attrsToGet = [attr];
+	if (attr === 'attack') {
+		attrsToGet.push('dread');
+	}
+	getAttrs(attrsToGet, async (values) => {
+		const valStr = values[attr] || "0";
+		const attrMod = parseInt(valStr) || 0;
+		const modifier = attrMod + extraMod + defenseMod;
+
+		let rollResult;
+		let rollDescription = "";
+		let finalTotal = 0;
+
+		if (rollType === 'normal') {
+			rollResult = rollDice(12, 1, modifier);
+			rollDescription = `(${rollResult.rolls.join(', ')})`;
+			finalTotal = rollResult.total;
+		} else {
+			// For advantage/disadvantage, roll 2 dice
+			rollResult = rollDice(12, 2, modifier);
+			if (rollType === 'advantage') {
+				finalTotal = rollResult.advantageTotal;
+				rollDescription = `[A](${rollResult.rolls.join(', ')})`;
+			} else {
+				finalTotal = rollResult.disadvantageTotal;
+				rollDescription = `[D](${rollResult.rolls.join(', ')})`;
+			}
+		}
+
+		const label = attr.charAt(0).toUpperCase() + attr.slice(1).replace('_', ' ');
+		const playerName = await localState['character_name'] || await OBR.player.getName() || "Unknown";
+		const title = `${playerName} - ${label}`;
+		let message = `${rollDescription}${modifier >= 0 ? ' + ' : ' - '}${Math.abs(modifier)} = <b>${finalTotal}</b>`;
+
+		if (attr === 'attack') {
+			const dreadVal = values['dread'] || "1d4";
+			const parts = dreadVal.toLowerCase().split('d');
+			if (parts.length === 2) {
+				const count = parseInt(parts[0]) || 1;
+				const sides = parseInt(parts[1]) || 4;
+				const dreadResult = rollDice(sides, count, 0);
+				message += `<br>Dread: <b>${dreadResult.total}</b>`;
+			}
+		}
+
+		showCustomNotification(title, message);
+
+		// Update roll history
+		const timestamp = new Date();
+		const timeString = timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+		const newEntry = `[${timeString}] ${playerName} - ${label}: ${message.replace('<br>', ' | ').replace(/<b>|<\/b>/g, '')}`;
+		await updateRoomRollHistory(newEntry);
+	});
+};
+
+const initRollButtons = () => {
+	signed.forEach(attr => {
+		const btn = document.querySelector(`button[name="act_${attr}"]`);
+		if (btn) {
+			// Left click - Normal Roll
+			btn.addEventListener('click', (e) => {
+				e.preventDefault();
+				handleRoll(attr, 'normal', false);
+			});
+
+			// Right click - Context Menu
+			btn.addEventListener('contextmenu', (e) => {
+				e.preventDefault();
+				const mouseEvent = e as MouseEvent;
+				showContextMenu(mouseEvent.clientX, mouseEvent.clientY, [
+					{
+						label: 'Roll Normal + Extra Modifier',
+						action: () => handleRoll(attr, 'normal', true)
+					},
+					{
+						label: 'Roll with Advantage',
+						action: () => handleRoll(attr, 'advantage', true)
+					},
+					{
+						label: 'Roll with Disadvantage',
+						action: () => handleRoll(attr, 'disadvantage', true)
+					}
+				]);
+			});
+		}
+	});
+};
 
 OBR.onReady(async () => {
+	console.log("EEM Sheet Script Ready");
 	isReady = true;
 	initRepeatingSections();
-	OBR.player.onChange(async () => {
-		console.log("Metadata change detected");
+	initRollButtons();
+
+	// Load initial history
+	await loadRoomRollHistory();
+
+	// Listen for room metadata changes
+	OBR.room.onMetadataChange((metadata) => {
+		const history = (metadata[ROOM_METADATA_ID] as any)?.roll_history;
+		if (history !== undefined) {
+			const textarea = document.querySelector('[name="attr_room_roll_history"]') as HTMLTextAreaElement;
+			if (textarea) {
+				textarea.value = history;
+			}
+		}
 	});
 	await loadSheetData();
 });

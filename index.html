@@ -17,7 +17,11 @@
           <div class="corner-box-wrapper">
             <div class="corner-box">
               <div class="content two-columns">
-                <label for="attr_character_name" data-i18n="name-and-pronouns">Name & Pronouns</label>
+                <label for="attr_character_name" data-i18n="name-and-pronouns">
+                  <div><span>Name</span>
+                    <span style="font-size:0.66em; display: block;">& Pronouns</span>
+                  </div>
+                </label>
                 <input type="text" id="attr_character_name" name="attr_character_name" />
                 <label for="attr_class" data-i18n="class">Class</label>
                 <input type="text" id="attr_class" name="attr_class" list="class-list" data-i18n-dynamic />
@@ -67,6 +71,7 @@
           <button type="action" name="act_inventory" class="sheet-type-pc sheet-button1" data-i18n="inventory-and-crafting">Inventory</button>
           <button type="action" name="act_background" class="sheet-type-pc sheet-button2" data-i18n="personality-and-backstory">Background</button>
           <button type="action" name="act_notes" class="sheet-type-pc sheet-button3" data-i18n="notes-and-portrait">Journal</button>
+          <button type="action" name="act_history" class="sheet-type-pc sheet-button4" data-i18n="roll-history">Roll History</button>
           <button type="action" name="act_settings" class="sheet-button5"><span data-i18n="settings">Settings</span><span class="gear-icon" style="font-family:Pictos;">x</span></button>
         </div>
         <!--********* SHEET - ATTRIBUTES & ABILITIES **********-->
@@ -157,6 +162,9 @@
                 <input type="hidden" class="skilledit" name="attr_skilledit" value="0" />
                 <input type="checkbox" name="attr_skilledit" />
                 <input type="text" name="attr_skillname" value="">
+                <button type="action" name="act_share" class="btn-share">
+                  <div></div>
+                </button>
                 <div class="sheet-auto-expand">
                   <span name="attr_skilldescription"></span>
                   <textarea class="skill-description" name="attr_skilldescription" rows="4"></textarea>
@@ -388,6 +396,15 @@
             </div>
           </div>
         </div>
+        <!--********* NOTES **********-->
+        <div class="sheet-history">
+          <div class="note-box">
+            <div>
+              <h2 data-i18n="roll-history" class="hint">Roll History</h2>
+              <textarea rows="18" name="attr_room_roll_history" style="font-family: monospace;" readonly></textarea>
+            </div>
+          </div>
+        </div>
         <!--********* SETTINGS **********-->
         <div class="sheet-settings">
           <div class="settings-onoff">
@@ -422,7 +439,7 @@
       </div>
     </div>
     <!--********* HIDDEN ATTRIBUTES **********-->
-    <input type="hidden" name="attr_version" value="2.0.0" />
+    <input type="hidden" name="attr_version" value="2.1.0" />
 
     <!-- Scripts moved to main.ts -->
   </div>

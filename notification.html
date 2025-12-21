@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Notification</title>
+	<style>
+		html {
+			height: 100%;
+		}
+
+		body {
+			margin: 0;
+			padding: 12px;
+			padding-top: 40px;
+			color: #000;
+			font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+			overflow: hidden;
+			display: flex;
+			flex-direction: column;
+			height: 100%;
+			box-sizing: border-box;
+			border: 2px solid #cc9133;
+			border-radius: 16px;
+			background-color: #fff;
+			text-align: center;
+		}
+
+		#message {
+			font-size: 14px;
+			line-height: 16px;
+			margin: auto;
+		}
+
+		#title {
+			font-weight: bold;
+			font-size: 16px;
+			color: #fff;
+			background-color: #cc9133;
+			width: 100%;
+			position: absolute;
+			padding: 8px 0;
+			top: 0;
+			left: 0;
+		}
+	</style>
+</head>
+
+<body>
+	<div id="title"></div>
+	<div id="message"></div>
+	<script type="module" src="/src/notification_view.ts"></script>
+</body>
+
+</html>

@@ -1,55 +1,55 @@
-# mcc-sheet
+---
+title: Land of Eem - Character Sheet
+description: Fan-made character sheet for the Land of Eem RPG
+author: Blaze Sanecki
+image: ![Eem Preview](https://raw.githubusercontent.com/blaze-sanecki/owlbear-landofeem-sheet/master/public/images/hero.png)
+icon: ![Eem Icon](https://raw.githubusercontent.com/blaze-sanecki/owlbear-landofeem-sheet/master/public/images/icon.svg)
+tags:
+  - Tool
+  - Automation
+  - Character Sheet
+manifest: https://eem.owlbear.jelonek.quest/manifest.json
+learn-more: https://ko-fi.com/blazesanecki
+---
+# Land of Eem - Character Sheet
 
-A Vite + TypeScript project.
+This is an unofficial fan-made sheet created with the official blessing of the Land of Eem creators.
 
-## Getting Started
+**Feautures**
+- Custom design matching the Land of Eem official character sheet aesthetic
+- Interactive rolls with advantage/disadvantage support
+- Auto-Recalculation of abilities and stats when changing related attributes
+- Optional modifier validation (total modifier clamped to -3 and +3)
 
-### Prerequisites
+**Rolls**
 
-- Node.js (v18 or higher recommended)
-- npm
+**Advantage/Disadvantage**
 
-### Installation
+**Multiple Characters**
 
-Dependencies are already installed. If you need to reinstall them:
+**Support**
 
-```bash
-npm install
-```
+**Roadmap (TODO list)**
+- Add interactive dice icons for making generic rolls
+- Buttons for consuming rations (automated usage die roll)
+- Buttons for spending coins (automated usage die roll)
 
-### Development
+**License**
 
-Start the development server:
+This character sheet is a fan work created for use with The Land of Eem tabletop RPG. All Land of Eem intellectual property belongs to Ben Costa & James Parks.
 
-```bash
-npm run dev
-```
+**Fonts Used**
+- Bird of Feather (replacement for the Blackriver font used in the Land of Eem rulebooks)
+- DM Sans (replacement for the New Atten font used in the Land of Eem rulebooks)
 
-The application will be available at `http://localhost:5173/`
+All used fonts are free for non-commercial use and allow being used as embeded online fonts.
 
-### Building for Production
+#### Credits
 
-Build the project:
+**Character Sheet Created by**: Blaze Sanecki
+**Land of Eem Created By**: Ben Costa & James Parks  
+**Official Land of Eem Website**: [landofeem.com](https://landofeem.com/)
 
-```bash
-npm run build
-```
+#### Version
 
-Preview the production build:
-
-```bash
-npm run preview
-```
-
-## Project Structure
-
-- `src/` - Source files
-- `public/` - Static assets
-- `index.html` - Entry HTML file
-- `tsconfig.json` - TypeScript configuration
-- `vite.config.ts` - Vite configuration (if present)
-
-## Tech Stack
-
-- [Vite](https://vite.dev/) - Build tool
-- [TypeScript](https://www.typescriptlang.org/) - Type-safe JavaScript
+Current Version: 2.1.0
