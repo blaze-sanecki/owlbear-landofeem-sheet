@@ -996,6 +996,34 @@ const loadRoomRollHistory = async () => {
 	}
 };
 
+const getAttackOutcome = (total: number): string => {
+	if (total >= 12) {
+		return "<b>Critical Hit</b>!";
+	} else if (total >= 9) {
+		return "<b>Hit</b>!";
+	} else if (total >= 6) {
+		return "<b>Hit with a Counter Attack</b>/<b>Grazing Shot</b>.";
+	} else if (total >= 3) {
+		return "<b>Miss with a Plus</b>.";
+	} else {
+		return "<b>Critical Miss</b>.";
+	}
+};
+
+const getCheckOutcome = (total: number): string => {
+	if (total >= 12) {
+		return "<b>Complete Success</b>!";
+	} else if (total >= 9) {
+		return "<b>Success</b>!";
+	} else if (total >= 6) {
+		return "<b>Success with a Twist</b>.";
+	} else if (total >= 3) {
+		return "<b>Failure with a Plus</b>.";
+	} else {
+		return "<b>Complete Failure</b>.";
+	}
+};
+
 const getAdditionalModifier = (title: string = 'Additional Modifier'): Promise<number | null> => {
 	return new Promise((resolve) => {
 		const channel = new BroadcastChannel('owlbear-landofeem-modifier');
@@ -1049,7 +1077,15 @@ const handleRoll = async (attr: string, rollType: 'normal' | 'advantage' | 'disa
 	getAttrs(attrsToGet, async (values) => {
 		const valStr = values[attr] || "0";
 		const attrMod = parseInt(valStr) || 0;
-		const modifier = attrMod + extraMod + defenseMod;
+		let modifier = attrMod + extraMod + defenseMod;
+
+		if ((localState['clamp_roll_modifier'] || 'true') === 'true') {
+			if (modifier < -3) {
+				modifier = -3;
+			} else if (modifier > 3) {
+				modifier = 3;
+			}
+		}
 
 		let rollResult;
 		let rollDescription = "";
@@ -1084,7 +1120,11 @@ const handleRoll = async (attr: string, rollType: 'normal' | 'advantage' | 'disa
 				const sides = parseInt(parts[1]) || 4;
 				const dreadResult = rollDice(sides, count, 0);
 				message += `<br>Dread: <b>${dreadResult.total}</b>`;
+				message += "<br><br>" + getAttackOutcome(finalTotal);
 			}
+		}
+		else {
+			message += "<br>" + getCheckOutcome(finalTotal);
 		}
 
 		showCustomNotification(title, message, 6000);
@@ -1097,7 +1137,7 @@ const handleRoll = async (attr: string, rollType: 'normal' | 'advantage' | 'disa
 		// Update roll history
 		const timestamp = new Date();
 		const timeString = timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
-		const newEntry = `[${timeString}] ${playerName} - ${label}: ${message.replace('<br>', ' | ').replace(/<b>|<\/b>/g, '')}`;
+		const newEntry = `[${timeString}] ${playerName} - ${label}: ${message.replace(/(<br>)+/g, ' | ').replace(/<b>|<\/b>/g, '')}`;
 		await updateRoomRollHistory(newEntry);
 	});
 };
