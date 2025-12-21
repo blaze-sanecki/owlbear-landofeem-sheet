@@ -10,6 +10,7 @@ let isLoading = false;
 let isReady = false;
 const ID = "quest.jelonek.owlbear.eem";
 const ROOM_METADATA_ID = "quest.jelonek.owlbear.eem/room_data";
+const BROADCAST_CHANNEL = "quest.jelonek.owlbear.eem/broadcast";
 let localState: Record<string, any> = {};
 let saveTimeout: number | undefined;
 let draggedRowId: string | null = null;
@@ -280,9 +281,21 @@ const createRepeatingRow = (container: HTMLElement, fieldset: HTMLFieldSetElemen
 	if (shareBtn) {
 		shareBtn.addEventListener('click', async () => {
 			const skill = localState.repeating_skills?.find((s: any) => s.id === rowId);
-			const name = (skill["skillname"] || "Unknown Skill").toUpperCase();
+			const name = (skill["skillname"] || "").toUpperCase();
 			const desc = (skill["skilldescription"] || "").replace(/\n/g, '<br>');
-			showCustomNotification(name, desc, 12000);
+			if (name === "" || desc === "") {
+				showCustomNotification("Error", "Skill must have a name and description to share.", 5000);
+				return;
+			}
+			const playerName = localState['character_name'] || await OBR.player.getName() || "Unknown";
+			const title = `${playerName} - ${name}`;
+
+			OBR.broadcast.sendMessage(BROADCAST_CHANNEL, {
+				title,
+				message: desc,
+				duration: 12000
+			});
+			showCustomNotification(title, desc, 12000);
 		});
 	}
 
@@ -1075,6 +1088,11 @@ const handleRoll = async (attr: string, rollType: 'normal' | 'advantage' | 'disa
 		}
 
 		showCustomNotification(title, message, 6000);
+		OBR.broadcast.sendMessage(BROADCAST_CHANNEL, {
+			title,
+			message,
+			duration: 6000
+		});
 
 		// Update roll history
 		const timestamp = new Date();
@@ -1122,6 +1140,12 @@ OBR.onReady(async () => {
 	isReady = true;
 	initRepeatingSections();
 	initRollButtons();
+
+	// Listen for broadcast messages
+	OBR.broadcast.onMessage(BROADCAST_CHANNEL, (event) => {
+		const data = event.data as { title: string, message: string, duration: number };
+		showCustomNotification(data.title, data.message, data.duration);
+	});
 
 	// Load initial history
 	await loadRoomRollHistory();
