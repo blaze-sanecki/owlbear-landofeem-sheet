@@ -1,3 +1,17 @@
+---
+title: Land of Eem - Character Sheet
+description: Fan-made character sheet for the Land of Eem RPG
+author: Blaze Sanecki
+image: https://raw.githubusercontent.com/blaze-sanecki/owlbear-landofeem-sheet/master/public/images/screenshots/instructions-hero.jpg
+icon: https://raw.githubusercontent.com/blaze-sanecki/owlbear-landofeem-sheet/master/public/images/icon.svg
+tags:
+  - tool
+  - automation
+  - combat
+manifest: https://eem.owlbear.jelonek.quest/manifest.json
+learn-more: https://github.com/blaze-sanecki/owlbear-landofeem-sheet
+---
+
 # Land of Eem - Character Sheet
 
 This is an unofficial fan-made sheet created with permission of the Land of Eem authors.
