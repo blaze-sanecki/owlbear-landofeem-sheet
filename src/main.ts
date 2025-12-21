@@ -282,7 +282,7 @@ const createRepeatingRow = (container: HTMLElement, fieldset: HTMLFieldSetElemen
 			const skill = localState.repeating_skills?.find((s: any) => s.id === rowId);
 			const name = (skill["skillname"] || "Unknown Skill").toUpperCase();
 			const desc = (skill["skilldescription"] || "").replace(/\n/g, '<br>');
-			showCustomNotification(name, desc);
+			showCustomNotification(name, desc, 12000);
 		});
 	}
 
@@ -1074,7 +1074,7 @@ const handleRoll = async (attr: string, rollType: 'normal' | 'advantage' | 'disa
 			}
 		}
 
-		showCustomNotification(title, message);
+		showCustomNotification(title, message, 6000);
 
 		// Update roll history
 		const timestamp = new Date();

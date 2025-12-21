@@ -4,6 +4,7 @@ OBR.onReady(async () => {
 	const params = new URLSearchParams(window.location.search);
 	const messageString = params.get("message");
 	const titleString = params.get("title");
+	const duration = parseInt(params.get("duration") || "5000");
 	const messageElement = document.getElementById("message");
 	const titleElement = document.getElementById("title");
 	if (messageElement && messageString && titleElement && titleString) {
@@ -19,5 +20,5 @@ OBR.onReady(async () => {
 	// Auto close after 5 seconds
 	setTimeout(() => {
 		OBR.popover.close("quest.jelonek.owlbear.eem/notification");
-	}, 5000);
+	}, duration);
 });

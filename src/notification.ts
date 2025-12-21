@@ -2,7 +2,7 @@ import OBR from "@owlbear-rodeo/sdk";
 
 const NOTIFICATION_ID = "quest.jelonek.owlbear.eem/notification";
 
-export async function showCustomNotification(title: string, message: string) {
+export async function showCustomNotification(title: string, message: string, durationMs: number = 5000) {
 	// Close existing if any
 	await OBR.popover.close(NOTIFICATION_ID);
 
@@ -23,7 +23,7 @@ export async function showCustomNotification(title: string, message: string) {
 	const height = 60 + (lineCount * 20);
 
 	const encodedMessage = encodeURIComponent(message);
-	const url = `/notification.html?message=${encodedMessage}&title=${encodeURIComponent(title)}`;
+	const url = `/notification.html?message=${encodedMessage}&title=${encodeURIComponent(title)}&duration=${durationMs}`;
 
 	const viewportWidth = await OBR.viewport.getWidth();
 
