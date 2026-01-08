@@ -156,7 +156,7 @@ const loadSheetData = async () => {
 		// Ensure save_slot is set to the current slot, even if data was empty
 		localState["save_slot"] = saveSlot;
 
-		console.log("Local data loaded", key, localState);
+		console.log("Local data loaded");
 		// Initialize repeating sections from array if exists
 		if (localState.repeating_skills && Array.isArray(localState.repeating_skills)) {
 			reconstructRepeatingSections(localState.repeating_skills);
@@ -832,7 +832,7 @@ radios.forEach(fieldName => {
 				localStorage.setItem(`${ID}/players/${playerId}/last_save_slot`, String(saveSlot || 1));
 				// Load the selected save slot
 				await loadSheetData();
-				console.log("Save slot " + saveSlot + " loaded.", localState);
+				console.log("Save slot " + saveSlot + " loaded.");
 			});
 		});
 	}
