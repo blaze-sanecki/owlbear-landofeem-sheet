@@ -1,6 +1,6 @@
 import OBR from "@owlbear-rodeo/sdk";
 
-const NOTIFICATION_ID = "quest.jelonek.owlbear.eem/notification";
+const NOTIFICATION_ID = "bond.owlbear.eem/notification";
 
 export async function showCustomNotification(title: string, message: string, durationMs: number = 5000) {
 	// Close existing if any

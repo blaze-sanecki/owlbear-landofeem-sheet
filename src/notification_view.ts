@@ -14,11 +14,11 @@ OBR.onReady(async () => {
 
 	// Close on click
 	document.body.addEventListener('click', () => {
-		OBR.popover.close("quest.jelonek.owlbear.eem/notification");
+		OBR.popover.close("bond.owlbear.eem/notification");
 	});
 
 	// Auto close after 5 seconds
 	setTimeout(() => {
-		OBR.popover.close("quest.jelonek.owlbear.eem/notification");
+		OBR.popover.close("bond.owlbear.eem/notification");
 	}, duration);
 });

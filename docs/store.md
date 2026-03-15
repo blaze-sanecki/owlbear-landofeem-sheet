@@ -8,7 +8,7 @@ tags:
   - tool
   - automation
   - combat
-manifest: https://eem.owlbear.jelonek.quest/manifest.json
+manifest: https://eem.owlbear.bond/manifest.json
 learn-more: https://github.com/blaze-sanecki/owlbear-landofeem-sheet
 ---
 
